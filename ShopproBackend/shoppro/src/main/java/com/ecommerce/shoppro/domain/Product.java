@@ -1,0 +1,136 @@
+package com.ecommerce.shoppro.domain;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity 
+@Table(name = "products")
+public class Product {
+	@Id 
+	@GeneratedValue(strategy = GenerationType.IDENTITY) 
+	private Long id; 
+	private String name; 
+	@Column(length = 1000) 
+	private String description; 
+	private BigDecimal price; 
+	private Integer stock; 
+	private String imageUrl; 
+	private String category; 
+	private LocalDateTime createdAt = LocalDateTime.now(); 
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL) 
+	private List<OrderItem> orderItems; 
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL) 
+	private List<CartItem> cartItems; 
+	// Getters and setters 
+	public Product(Long id, String name, String description, BigDecimal price, Integer stock, String imageUrl,
+			String category, LocalDateTime createdAt, List<OrderItem> orderItems, List<CartItem> cartItems) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.description = description;
+		this.price = price;
+		this.stock = stock;
+		this.imageUrl = imageUrl;
+		this.category = category;
+		this.createdAt = createdAt;
+		this.orderItems = orderItems;
+		this.cartItems = cartItems;
+	}
+	
+	public Product() {
+		
+	}
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public BigDecimal getPrice() {
+		return price;
+	}
+	public void setPrice(BigDecimal price) {
+		this.price = price;
+	}
+	public Integer getStock() {
+		return stock;
+	}
+	public void setStock(Integer stock) {
+		this.stock = stock;
+	}
+	public String getImageUrl() {
+		return imageUrl;
+	}
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+	public String getCategory() {
+		return category;
+	}
+	public void setCategory(String category) {
+		this.category = category;
+	}
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+	public List<OrderItem> getOrderItems() {
+		return orderItems;
+	}
+	public void setOrderItems(List<OrderItem> orderItems) {
+		this.orderItems = orderItems;
+	}
+	public List<CartItem> getCartItems() {
+		return cartItems;
+	}
+	public void setCartItems(List<CartItem> cartItems) {
+		this.cartItems = cartItems;
+	}
+	@Override
+	public String toString() {
+		return "Product [id=" + id + ", name=" + name + ", description=" + description + ", price=" + price + ", stock="
+				+ stock + ", imageUrl=" + imageUrl + ", category=" + category + ", createdAt=" + createdAt + "]";
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Product other = (Product) obj;
+		return Objects.equals(id, other.id);
+	}
+	
+
+}

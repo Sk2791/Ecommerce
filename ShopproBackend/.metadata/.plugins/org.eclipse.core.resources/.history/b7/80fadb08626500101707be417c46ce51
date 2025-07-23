@@ -1,0 +1,5 @@
+package com.ecommerce.shoppro.repo;
+
+public interface OrderRepository {
+
+}

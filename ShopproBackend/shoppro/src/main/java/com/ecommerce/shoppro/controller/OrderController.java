@@ -1,0 +1,108 @@
+package com.ecommerce.shoppro.controller;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ecommerce.shoppro.domain.CartItem;
+import com.ecommerce.shoppro.domain.Order;
+import com.ecommerce.shoppro.domain.OrderItem;
+import com.ecommerce.shoppro.domain.Product;
+import com.ecommerce.shoppro.domain.User;
+import com.ecommerce.shoppro.dto.OrderResponse;
+import com.ecommerce.shoppro.repo.CartItemRepository;
+import com.ecommerce.shoppro.repo.OrderItemRepository;
+import com.ecommerce.shoppro.repo.OrderRepository;
+import com.ecommerce.shoppro.repo.ProductRepository;
+import com.ecommerce.shoppro.repo.UserRepository;
+
+import jakarta.transaction.Transactional;
+
+@RestController 
+@RequestMapping("/api/orders") 
+@CrossOrigin(origins = "*") 
+public class OrderController { 
+@Autowired 
+private OrderRepository orderRepository; 
+@Autowired 
+private CartItemRepository cartItemRepository; 
+@Autowired 
+private OrderItemRepository orderItemRepository;
+@Autowired
+private UserRepository userRepository;
+@Autowired
+private ProductRepository productRepository;
+
+@PostMapping("/place/{userId}") 
+@Transactional
+public ResponseEntity<Order> placeOrder(@PathVariable Long userId) { 
+	Optional<User> userOpt=userRepository.findById(userId);
+	if(userOpt.isEmpty()) {
+		return ResponseEntity.badRequest().build();
+	}
+	List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
+	if (cartItems.isEmpty()) { 
+		return ResponseEntity.badRequest().build(); 
+}
+User user = userOpt.get();	
+Order order = new Order(); 
+order.setUser(user); // or fetch user entity 
+order.setStatus("PLACED"); 
+order.setCreatedAt(LocalDateTime.now()); 
+BigDecimal total = BigDecimal.ZERO; 
+List<OrderItem> orderItems = new ArrayList<>(); 
+for (CartItem cartItem : cartItems) { 
+	Product product = cartItem.getProduct();
+	int orderedQty = cartItem.getQuantity();
+	
+	if(product.getStock()<orderedQty) {
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+	}
+	
+	product.setStock(product.getStock()-orderedQty);
+	productRepository.save(product);
+	
+	OrderItem item = new OrderItem(); 
+	item.setOrder(order); 
+	item.setProduct(cartItem.getProduct()); 
+	item.setQuantity(cartItem.getQuantity()); 
+	item.setPrice(cartItem.getProduct().getPrice()); 
+	total = total.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))); 
+	orderItems.add(item); 
+}
+
+order.setTotalAmount(total); 
+order.setOrderItems(orderItems); 
+Order savedOrder = orderRepository.save(order); 
+orderItemRepository.saveAll(orderItems); 
+cartItemRepository.deleteByUserId(userId); // clear cart 
+return ResponseEntity.ok(savedOrder); 
+} 
+
+@GetMapping("/user/{userId}") 
+public ResponseEntity<List<OrderResponse>> getOrdersByUser(@PathVariable Long userId){
+	List<Order> orders = orderRepository.findByUserId(userId);
+	
+	List<OrderResponse> response = orders.stream().map(order->new OrderResponse(
+			order.getId(),
+			order.getTotalAmount(),
+			order.getStatus(),
+			order.getCreatedAt()
+			)).collect(Collectors.toList());
+	return ResponseEntity.ok(response);
+}
+
+}

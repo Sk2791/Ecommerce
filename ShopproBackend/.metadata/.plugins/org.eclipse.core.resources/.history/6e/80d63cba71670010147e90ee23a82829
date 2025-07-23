@@ -1,0 +1,5 @@
+package com.ecommerce.shoppro.dto;
+
+public class UserDTO {
+
+}
